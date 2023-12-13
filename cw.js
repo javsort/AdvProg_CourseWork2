@@ -1,9 +1,12 @@
 "use strict";
+const { get } = require('http');
 const cwlib = require( './cwlib.js' );
 
 let line = '';
 let lineIndex = 0;
 let longestSubstrings = [];
+let longestSubLength = 0;
+
 
 function isBalanced(str) {
     let counts = Array(26).fill(0);
@@ -26,10 +29,6 @@ function findSubstrings(line) {
     let stringAsChars = [...line];
     let items = stringAsChars.map((char, index) => [char, index]);
 
-    //console.log("String as chars: ", stringAsChars);
-
-    //subS = stringAsChars.map()*/
-
     let returnVal = [];
 
     returnVal = Array(line.length).fill().flatMap((_, i) => 
@@ -37,7 +36,7 @@ function findSubstrings(line) {
 
         let sliced = line.slice(i, i + j);
 
-        return {substring: sliced, indexStart: i, indexFinish: i + j - 1};
+        return {substring: sliced, indexStart: i, indexFinish: i + j - 1, lineIndex: lineIndex};
         //return sliced;
     })
     ).filter(sub => sub.substring.length > 0);
@@ -46,27 +45,39 @@ function findSubstrings(line) {
     returnVal = returnVal.filter(sub => isBalanced(sub.substring));
 
     returnVal.sort((a, b) => (a.indexFinish - a.indexStart) - (b.indexFinish - b.indexStart));
+
+    returnVal.forEach(sub => {
+        console.log("[ " + sub.indexStart + ", " + sub.indexFinish + " ]");
     
-    console.log("Value to return: ", returnVal);
-    // traverse returnnVal, for(sub in returnVal)
-    // if sub is empty, remove it
-    // if not, print [ indeOf(sub[0]) , indexOf(sub[sub.length - 1]) ]
+    });
 
+    // If it's already sorted by size, just get the last one
+    let longest = returnVal.filter(sub => sub.substring.length === returnVal[returnVal.length - 1].substring.length);
+    
+    let longestInLine = "";
+    longest.forEach(sub => {
+        longestInLine += "[ " + sub.indexStart + ", " + sub.indexFinish + " ], "; 
+    });
 
-    return returnVal;
+    console.log("Longest balanced substrings for this line: [", longestInLine.slice(0, -2),"]\n");
+
+    return longest;
 }
 
-function findLongest(substrings) {
-    return substrings.reduce((longest, substring) => {
-
-        if (substring.length > longest.length) {
-            return substring;
-
-        } else {
-            return longest;
-
-        }
-    }, '');
+function updateLongest(substrings) {
+    if(substrings.length === 0) {
+        return;
+    } else if (longestSubLength < substrings[0].substring.length) {
+        longestSubstrings = substrings;
+        longestSubLength = substrings[0].substring.length;
+        return;
+    } else if (longestSubLength === substrings[0].substring.length) {
+        // just changed
+        longestSubstrings = longestSubstrings.concat(substrings);
+        return;
+    } else {
+        return;
+    }
 }
 
 cwlib.on( 'ready', function( ) {
@@ -79,28 +90,48 @@ cwlib.on( 'data', function( data ) {
 } );
 
 cwlib.on( 'reset', function() {
-    console.log("\nData received: ", line);
+    //console.log("\nData received: ", line);
     let substrings = findSubstrings(line);
 
-    //console.log(`Balanced substrings for line ${lineIndex}:`, substrings);
-
-    let longestInLine = findLongest(substrings);
-
-    if (longestInLine.length > longestSubstrings.length) {
-        longestSubstrings = [longestInLine];
-    } else if (longestInLine.length === longestSubstrings.length) {
-        longestSubstrings.push(longestInLine);
-    }
-
-    //console.log(`Longest balanced substrings for line ${lineIndex}:`, longestInLine, "\n");
+    updateLongest(substrings);
 
     line = '';
     lineIndex++;
 } );
 
 cwlib.on( 'end', function() {
+    let subStringsFinal = printSubStrings(longestSubstrings);
+
     // Print overall longest substrings
-    console.log("Overall longest balanced substrings: ", longestSubstrings);
+    console.log("Overall longest balanced substrings: ",subStringsFinal);
 } );
+
+function printSubStrings(subStrings) {
+    let finalString = "\n";
+
+    subStrings.sort((a, b) => (a.lineIndex - b.lineIndex));
+
+    let currentLineIndex = subStrings[0].lineIndex;
+    let currentLineStrings = "";
+
+    subStrings.forEach(sub => {
+        if(sub.lineIndex === currentLineIndex){
+            currentLineStrings += "[ " + sub.indexStart + ", " + sub.indexFinish + " ], ";
+            
+        } else {
+            finalString += "[ " + currentLineIndex + ", [ " + currentLineStrings.slice(0, -2) + " ] ]\n" ;
+
+            currentLineIndex = sub.lineIndex;
+
+            currentLineStrings = "";
+            
+            currentLineStrings += "[ " + sub.indexStart + ", " + sub.indexFinish + " ], ";
+        }
+    });
+
+    finalString += "[ " + currentLineIndex + ", [ " + currentLineStrings.slice(0, -2) + " ] ]\n" ;
+
+    return finalString;
+}
 
 cwlib.setup( process.argv[2]);
