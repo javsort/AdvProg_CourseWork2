@@ -1,5 +1,4 @@
 "use strict";
-const { get } = require('http');
 const cwlib = require( './cwlib.js' );
 
 let line = '';
@@ -25,10 +24,6 @@ function isBalanced(str) {
 }
 
 function findSubstrings(line) {
-
-    let stringAsChars = [...line];
-    let items = stringAsChars.map((char, index) => [char, index]);
-
     let returnVal = [];
 
     returnVal = Array(line.length).fill().flatMap((_, i) => 
@@ -67,30 +62,34 @@ function findSubstrings(line) {
 function updateLongest(substrings) {
     if(substrings.length === 0) {
         return;
+
     } else if (longestSubLength < substrings[0].substring.length) {
         longestSubstrings = substrings;
         longestSubLength = substrings[0].substring.length;
         return;
+
     } else if (longestSubLength === substrings[0].substring.length) {
-        // just changed
         longestSubstrings = longestSubstrings.concat(substrings);
         return;
+
     } else {
         return;
+
     }
 }
 
 cwlib.on( 'ready', function( ) {
 	cwlib.run(); 
+
 } );
 
 cwlib.on( 'data', function( data ) {
     // Add data to line
     line += data;
+
 } );
 
 cwlib.on( 'reset', function() {
-    //console.log("\nData received: ", line);
     let substrings = findSubstrings(line);
 
     updateLongest(substrings);
