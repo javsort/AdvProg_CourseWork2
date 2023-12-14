@@ -1,15 +1,18 @@
 "use strict";
 const cwlib = require( './cwlib.js' );
 
+// Declare main variables to be used
 let line = '';
 let lineIndex = 0;
 let longestSubstrings = [];
 let longestSubLength = 0;
 
-
+// Check if string is balanced
 function isBalanced(str) {
+    // Make array of 26 elements - for the alphabet
     let counts = Array(26).fill(0);
 
+    // For each character in the string, increment or decrement the count at the index of the character
     str.split('').forEach(char => {
         let index = char.toLowerCase().charCodeAt(0) - 'a'.charCodeAt(0);
 
@@ -18,7 +21,6 @@ function isBalanced(str) {
         }
 
     });
-
 
     return counts.every(count => count === 0);
 }
@@ -32,11 +34,9 @@ function findSubstrings(line) {
         let sliced = line.slice(i, i + j);
 
         return {substring: sliced, indexStart: i, indexFinish: i + j - 1, lineIndex: lineIndex};
-        //return sliced;
     })
     ).filter(sub => sub.substring.length > 0);
 
-    //returnVal = returnVal.filter(sub => sub.substring.length > 0);
     returnVal = returnVal.filter(sub => isBalanced(sub.substring));
 
     returnVal.sort((a, b) => (a.indexFinish - a.indexStart) - (b.indexFinish - b.indexStart));
@@ -78,6 +78,7 @@ function updateLongest(substrings) {
     }
 }
 
+// Start
 cwlib.on( 'ready', function( ) {
 	cwlib.run(); 
 
