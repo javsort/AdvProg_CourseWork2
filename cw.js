@@ -1,4 +1,5 @@
-// Author: 38880237
+// Student ID: 38880237
+
 "use strict";
 const cwlib = require( './cwlib.js' );
 
